@@ -23,10 +23,8 @@ class Benchmarks {
   }
 
   @Benchmark
-  def simpleReaderWriterState(): Unit = {
+  def simpleReaderWriterState(): Unit =
     testReaderWriterState[IO].run(Env("config"), State(2)).unsafeRunSync()
-    ()
-  }
 
   @Benchmark
   def simpleMTLZIO(): Unit = {
@@ -42,9 +40,7 @@ class Benchmarks {
   }
 
   @Benchmark
-  def simpleMTLReaderWriterState(): Unit = {
+  def simpleMTLReaderWriterState(): Unit =
     testMTL[P2].run(Env("config"), State(2)).unsafeRunSync()
-    ()
-  }
 
 }
