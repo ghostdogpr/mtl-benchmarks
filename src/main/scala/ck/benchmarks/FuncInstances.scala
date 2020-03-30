@@ -11,7 +11,7 @@ object FuncInstances {
 
   type Func[E, +L, S, +A] = (E, S) => SyncIO[(S, L, A)]
 
-  implicit def testApplicativeAsk[E, L, S](
+  implicit def funcApplicativeAsk[E, L, S](
     implicit ev: Applicative[Func[E, L, S, *]],
     monoid: Monoid[L]
   ): ApplicativeAsk[Func[E, L, S, *], E] =
@@ -22,7 +22,7 @@ object FuncInstances {
       }
     }
 
-  implicit def testFunctorTell[E, L, S](implicit ev: Functor[Func[E, L, S, *]]): FunctorTell[Func[E, L, S, *], L] =
+  implicit def funcFunctorTell[E, L, S](implicit ev: Functor[Func[E, L, S, *]]): FunctorTell[Func[E, L, S, *], L] =
     new DefaultFunctorTell[Func[E, L, S, *], L] {
       override val functor: Functor[Func[E, L, S, *]] = ev
       override def tell(l: L): Func[E, L, S, Unit] = {
@@ -30,7 +30,7 @@ object FuncInstances {
       }
     }
 
-  implicit def testMonadState[E, L, S](
+  implicit def funcMonadState[E, L, S](
     implicit ev: Monad[Func[E, L, S, *]],
     monoid: Monoid[L]
   ): MonadState[Func[E, L, S, *], S] =
@@ -44,7 +44,7 @@ object FuncInstances {
       }
     }
 
-  implicit def testMonad[E, L, S](implicit monoid: Monoid[L]): Monad[Func[E, L, S, *]] =
+  implicit def funcMonad[E, L, S](implicit monoid: Monoid[L]): Monad[Func[E, L, S, *]] =
     new Monad[Func[E, L, S, *]] {
       override def pure[A](x: A): Func[E, L, S, A] = {
         case (_, s) => SyncIO.pure((s, monoid.empty, x))
@@ -70,8 +70,8 @@ object FuncInstances {
       }
     }
 
-  implicit val t1: Monad[P3]                     = testMonad[Env, Chain[Event], State]
-  implicit val t2: ApplicativeAsk[P3, Env]       = testApplicativeAsk[Env, Chain[Event], State]
-  implicit val t3: FunctorTell[P3, Chain[Event]] = testFunctorTell[Env, Chain[Event], State]
-  implicit val t4: MonadState[P3, State]         = testMonadState[Env, Chain[Event], State]
+  implicit val t1: Monad[P3]                     = funcMonad[Env, Chain[Event], State]
+  implicit val t2: ApplicativeAsk[P3, Env]       = funcApplicativeAsk[Env, Chain[Event], State]
+  implicit val t3: FunctorTell[P3, Chain[Event]] = funcFunctorTell[Env, Chain[Event], State]
+  implicit val t4: MonadState[P3, State]         = funcMonadState[Env, Chain[Event], State]
 }
