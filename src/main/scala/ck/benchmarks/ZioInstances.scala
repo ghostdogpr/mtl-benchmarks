@@ -1,16 +1,21 @@
 package ck.benchmarks
 
 import cats.data.Chain
-import cats.{ Applicative, Functor, Monad }
 import cats.kernel.Monoid
 import cats.mtl._
+import cats.{ Applicative, Functor, Monad }
 import ck.benchmarks.Test._
 import izumi.reflect.Tags.Tag
-import zio.{ Has, Ref, ZIO }
+import zio.{ Ref, ZIO }
 
 object ZioInstances {
 
-  type ZIOReaderWriterState[E, +L, S, +A] = ZIO[Has[E] with Has[Ref[S]], Nothing, (L, A)]
+  trait ZIOEnv[E, S] {
+    def env: E
+    def state: Ref[S]
+  }
+
+  type ZIOReaderWriterState[E, +L, S, +A] = ZIO[ZIOEnv[E, S], Nothing, (L, A)]
 
   implicit def zioApplicativeAsk[E: Tag, L, S](
     implicit ev: Applicative[ZIOReaderWriterState[E, L, S, *]],
@@ -18,7 +23,8 @@ object ZioInstances {
   ): ApplicativeAsk[ZIOReaderWriterState[E, L, S, *], E] =
     new DefaultApplicativeAsk[ZIOReaderWriterState[E, L, S, *], E] {
       override val applicative: Applicative[ZIOReaderWriterState[E, L, S, *]] = ev
-      override def ask: ZIOReaderWriterState[E, L, S, E]                      = ZIO.access[Has[E]](_.get).map(env => (monoid.empty, env))
+      override def ask: ZIOReaderWriterState[E, L, S, E] =
+        ZIO.access[ZIOEnv[E, S]](env => (monoid.empty, env.env))
     }
 
   implicit def zioFunctorTell[E, L, S](
@@ -36,9 +42,9 @@ object ZioInstances {
     new DefaultMonadState[ZIOReaderWriterState[E, L, S, *], S] {
       override val monad: Monad[ZIOReaderWriterState[E, L, S, *]] = ev
       override def get: ZIOReaderWriterState[E, L, S, S] =
-        ZIO.accessM[Has[Ref[S]]](_.get.get.map(state => (monoid.empty, state)))
+        ZIO.accessM[ZIOEnv[E, S]](_.state.get.map(state => (monoid.empty, state)))
       override def set(s: S): ZIOReaderWriterState[E, L, S, Unit] =
-        ZIO.accessM[Has[Ref[S]]](_.get.set(s).as((monoid.empty, ())))
+        ZIO.accessM[ZIOEnv[E, S]](_.state.set(s).as((monoid.empty, ())))
     }
 
   implicit def zioMonad[E: Tag, L, S: Tag](implicit monoid: Monoid[L]): Monad[ZIOReaderWriterState[E, L, S, *]] =

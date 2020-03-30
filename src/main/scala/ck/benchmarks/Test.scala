@@ -6,7 +6,6 @@ import cats.data.{ Chain, IndexedReaderWriterStateT }
 import cats.effect.SyncIO
 import cats.implicits._
 import cats.mtl.{ ApplicativeAsk, FunctorTell, MonadState }
-import ck.benchmarks.FuncInstances.Func
 import ck.benchmarks.ZioInstances.ZIOReaderWriterState
 
 object Test {
@@ -16,7 +15,6 @@ object Test {
 
   type P[+A] = ZIOReaderWriterState[Env, Chain[Event], State, A]
   type P2[A] = IndexedReaderWriterStateT[SyncIO, Env, Chain[Event], State, State, A]
-  type P3[A] = Func[Env, Chain[Event], State, A]
 
   def testReaderWriterState[F[_]: Monad]: IndexedReaderWriterStateT[F, Env, Chain[Event], State, State, Unit] =
     for {
