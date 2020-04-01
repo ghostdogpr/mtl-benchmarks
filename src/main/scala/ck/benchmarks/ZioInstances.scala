@@ -10,10 +10,6 @@ import zio.{ Has, Ref, ZIO }
 
 object ZioInstances {
 
-  implicit val tag0: zio.Tagged[State]      = izumi.reflect.Tags.Tag.tagFromTagMacro[State]
-  implicit val tag1: zio.Tagged[Ref[State]] = izumi.reflect.Tags.Tag.tagFromTagMacro[Ref[State]]
-  implicit val tag2: zio.Tagged[Env]        = izumi.reflect.Tags.Tag.tagFromTagMacro[Env]
-
   type ZIOReaderWriterState[E, +L, S, +A] = ZIO[Has[E] with Has[Ref[S]], Nothing, (L, A)]
 
   implicit def zioApplicativeAsk[E: Tag, L, S](
@@ -34,9 +30,10 @@ object ZioInstances {
       override def tell(l: L): ZIOReaderWriterState[E, L, S, Unit]    = ZIO.succeed((l, ()))
     }
 
-  implicit def zioMonadState[E, L, S: Tag](
+  implicit def zioMonadState[E, L, S](
     implicit ev: Monad[ZIOReaderWriterState[E, L, S, *]],
-    monoid: Monoid[L]
+    monoid: Monoid[L],
+    tag: Tag[Ref[S]]
   ): MonadState[ZIOReaderWriterState[E, L, S, *], S] =
     new DefaultMonadState[ZIOReaderWriterState[E, L, S, *], S] {
       override val monad: Monad[ZIOReaderWriterState[E, L, S, *]] = ev
