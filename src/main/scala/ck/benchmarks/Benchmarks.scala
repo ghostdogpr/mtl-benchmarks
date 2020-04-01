@@ -8,7 +8,7 @@ import ck.benchmarks.Test._
 import ck.benchmarks.ZioInstances._
 import org.openjdk.jmh.annotations.{ State => S, _ }
 import zio.internal.Platform
-import zio.{ BootstrapRuntime, Ref, Runtime, ZEnv }
+import zio.{ BootstrapRuntime, Ref, Runtime, ZEnv, ZLayer }
 
 @S(Scope.Thread)
 @BenchmarkMode(Array(Mode.Throughput))
@@ -22,22 +22,15 @@ class Benchmarks {
     override val platform: Platform = Platform.benchmark
   }
 
+  private val layer = ZLayer.fromEffect(Ref.make(State(2))) ++ ZLayer.succeed(Env("config"))
+
   @Benchmark
   def simpleReaderWriterState(): Unit =
     testReaderWriterState[IO].run(Env("config"), State(2)).unsafeRunSync()
 
   @Benchmark
-  def simpleMTLZIO(): Unit = {
-    runtime.unsafeRun(for {
-      s <- Ref.make(State(2))
-      e = Env("config")
-      _ <- testMTL[P].provide(new ZIOEnv[Env, State] {
-            override def env: Env          = e
-            override def state: Ref[State] = s
-          })
-    } yield ())
-    ()
-  }
+  def simpleMTLZIO(): Unit =
+    runtime.unsafeRun(testMTL[P].provideLayer(layer))
 
   @Benchmark
   def simpleMTLReaderWriterState(): Unit =
