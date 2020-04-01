@@ -6,16 +6,11 @@ import cats.mtl._
 import cats.{ Applicative, Functor, Monad }
 import ck.benchmarks.Test._
 import izumi.reflect.Tags.Tag
-import zio.{ Ref, ZIO }
+import zio.{ Has, Ref, ZIO }
 
 object ZioInstances {
 
-  trait ZIOEnv[E, S] {
-    def env: E
-    def state: Ref[S]
-  }
-
-  type ZIOReaderWriterState[E, +L, S, +A] = ZIO[ZIOEnv[E, S], Nothing, (L, A)]
+  type ZIOReaderWriterState[E, +L, S, +A] = ZIO[Has[E] with Has[Ref[S]], Nothing, (L, A)]
 
   implicit def zioApplicativeAsk[E: Tag, L, S](
     implicit ev: Applicative[ZIOReaderWriterState[E, L, S, *]],
@@ -24,7 +19,7 @@ object ZioInstances {
     new DefaultApplicativeAsk[ZIOReaderWriterState[E, L, S, *], E] {
       override val applicative: Applicative[ZIOReaderWriterState[E, L, S, *]] = ev
       override def ask: ZIOReaderWriterState[E, L, S, E] =
-        ZIO.access[ZIOEnv[E, S]](env => (monoid.empty, env.env))
+        ZIO.access[Has[E]](_.get).map(env => (monoid.empty, env))
     }
 
   implicit def zioFunctorTell[E, L, S](
@@ -35,19 +30,20 @@ object ZioInstances {
       override def tell(l: L): ZIOReaderWriterState[E, L, S, Unit]    = ZIO.succeed((l, ()))
     }
 
-  implicit def zioMonadState[E: Tag, L, S: Tag](
+  implicit def zioMonadState[E, L, S](
     implicit ev: Monad[ZIOReaderWriterState[E, L, S, *]],
-    monoid: Monoid[L]
+    monoid: Monoid[L],
+    tag: Tag[Ref[S]]
   ): MonadState[ZIOReaderWriterState[E, L, S, *], S] =
     new DefaultMonadState[ZIOReaderWriterState[E, L, S, *], S] {
       override val monad: Monad[ZIOReaderWriterState[E, L, S, *]] = ev
       override def get: ZIOReaderWriterState[E, L, S, S] =
-        ZIO.accessM[ZIOEnv[E, S]](_.state.get.map(state => (monoid.empty, state)))
+        ZIO.accessM[Has[Ref[S]]](_.get.get.map(state => (monoid.empty, state)))
       override def set(s: S): ZIOReaderWriterState[E, L, S, Unit] =
-        ZIO.accessM[ZIOEnv[E, S]](_.state.set(s).as((monoid.empty, ())))
+        ZIO.accessM[Has[Ref[S]]](_.get.set(s).as((monoid.empty, ())))
     }
 
-  implicit def zioMonad[E: Tag, L, S: Tag](implicit monoid: Monoid[L]): Monad[ZIOReaderWriterState[E, L, S, *]] =
+  implicit def zioMonad[E, L, S](implicit monoid: Monoid[L]): Monad[ZIOReaderWriterState[E, L, S, *]] =
     new Monad[ZIOReaderWriterState[E, L, S, *]] {
       override def pure[A](x: A): ZIOReaderWriterState[E, L, S, A] = ZIO.succeed((monoid.empty, x))
       override def flatMap[A, B](
