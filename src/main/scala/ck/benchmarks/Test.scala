@@ -1,7 +1,7 @@
 package ck.benchmarks
 
 import scala.language.higherKinds
-import cats.Monad
+import cats.{ Eval, Monad }
 import cats.data.{ Chain, IndexedReaderWriterStateT }
 import cats.effect.SyncIO
 import cats.implicits._
@@ -15,6 +15,7 @@ object Test {
 
   type P[+A] = ZIOReaderWriterState[Env, Chain[Event], State, A]
   type P2[A] = IndexedReaderWriterStateT[SyncIO, Env, Chain[Event], State, State, A]
+  type P3[A] = IndexedReaderWriterStateT[Eval, Env, Chain[Event], State, State, A]
 
   val loops = 1000
 

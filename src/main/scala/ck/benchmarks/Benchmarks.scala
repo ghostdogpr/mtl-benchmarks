@@ -2,6 +2,7 @@ package ck.benchmarks
 
 import java.util.concurrent.TimeUnit
 import scala.language.{ higherKinds, postfixOps }
+import cats.data.Chain
 import cats.effect.IO
 import ck.benchmarks.IrwsInstances._
 import ck.benchmarks.Test._
@@ -22,18 +23,24 @@ class Benchmarks {
     override val platform: Platform = Platform.benchmark
   }
 
-  private val layer = ZLayer.fromEffect(Ref.make(State(2))) ++ ZLayer.succeed(Env("config"))
+  private val layer =
+    ZLayer.fromEffect(Ref.make(State(2))) ++
+      ZLayer.fromEffect(Ref.make(Chain.empty[Event])) ++
+      ZLayer.succeed(Env("config"))
 
   @Benchmark
-  def simpleReaderWriterState(): Unit =
+  def readerWriterStateIO(): Unit =
     testReaderWriterState[IO].run(Env("config"), State(2)).unsafeRunSync()
 
   @Benchmark
-  def simpleMTLZIO(): Unit =
+  def MTLZIO(): Unit =
     runtime.unsafeRun(testMTL[P].provideLayer(layer))
 
   @Benchmark
-  def simpleMTLReaderWriterState(): Unit =
+  def MTLReaderWriterStateIO(): Unit =
     testMTL[P2].run(Env("config"), State(2)).unsafeRunSync()
 
+  @Benchmark
+  def MTLReaderWriterStateEval(): Unit =
+    testMTL[P3].run(Env("config"), State(2)).value
 }
