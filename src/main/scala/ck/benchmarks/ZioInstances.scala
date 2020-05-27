@@ -5,8 +5,7 @@ import cats.kernel.Monoid
 import cats.mtl._
 import cats.{ Applicative, Functor, Monad }
 import ck.benchmarks.Test._
-import izumi.reflect.Tags.Tag
-import zio.{ Has, Ref, ZIO }
+import zio.{ Has, Ref, Tag, ZIO }
 
 object ZioInstances {
 
@@ -18,7 +17,7 @@ object ZioInstances {
   ): ApplicativeAsk[ZIOReaderWriterState[E, L, S, *], E] =
     new DefaultApplicativeAsk[ZIOReaderWriterState[E, L, S, *], E] {
       override val applicative: Applicative[ZIOReaderWriterState[E, L, S, *]] = ev
-      override def ask: ZIOReaderWriterState[E, L, S, E]                      = ZIO.access[Has[E]](_.get)
+      override def ask: ZIOReaderWriterState[E, L, S, E]                      = ZIO.service[E]
     }
 
   implicit def zioFunctorTell[E, L, S](
