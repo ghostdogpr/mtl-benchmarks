@@ -2,14 +2,15 @@ name := "ReaderWriterStateBenchmarks"
 
 version := "0.1"
 
-scalaVersion := "2.12.11"
+scalaVersion := "2.13.2"
 
-scalacOptions += "-Ypartial-unification"
+libraryDependencies += "org.typelevel" %% "cats-core"   % "2.4.2"
+libraryDependencies += "org.typelevel" %% "cats-effect" % "2.3.3"
+libraryDependencies += "org.typelevel" %% "cats-mtl"    % "1.1.2"
+libraryDependencies += "dev.zio"       %% "zio"         % "1.0.4-2"
+libraryDependencies += "dev.zio"       %% "zio-prelude" % "1.0.0-RC2"
 
-libraryDependencies += "org.typelevel" %% "cats-core"     % "2.1.1"
-libraryDependencies += "org.typelevel" %% "cats-effect"   % "2.1.3"
-libraryDependencies += "org.typelevel" %% "cats-mtl-core" % "0.7.1"
-libraryDependencies += "dev.zio"       %% "zio"           % "1.0.0-RC20"
+resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
 
 addCompilerPlugin("org.typelevel" %% "kind-projector"     % "0.11.0" cross CrossVersion.full)
 addCompilerPlugin("com.olegpy"    %% "better-monadic-for" % "0.3.1")

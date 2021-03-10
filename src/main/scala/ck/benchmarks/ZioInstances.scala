@@ -14,18 +14,18 @@ object ZioInstances {
   implicit def zioApplicativeAsk[E: Tag, L, S](
     implicit ev: Applicative[ZIOReaderWriterState[E, L, S, *]],
     monoid: Monoid[L]
-  ): ApplicativeAsk[ZIOReaderWriterState[E, L, S, *], E] =
-    new DefaultApplicativeAsk[ZIOReaderWriterState[E, L, S, *], E] {
+  ): Ask[ZIOReaderWriterState[E, L, S, *], E] =
+    new Ask[ZIOReaderWriterState[E, L, S, *], E] {
       override val applicative: Applicative[ZIOReaderWriterState[E, L, S, *]] = ev
-      override def ask: ZIOReaderWriterState[E, L, S, E]                      = ZIO.service[E]
+      override def ask[E2 >: E]: ZIOReaderWriterState[E, L, S, E2]            = ZIO.service[E]
     }
 
   implicit def zioFunctorTell[E, L, S](
     implicit ev: Functor[ZIOReaderWriterState[E, L, S, *]],
     monoid: Monoid[L],
     tag: Tag[Ref[L]]
-  ): FunctorTell[ZIOReaderWriterState[E, L, S, *], L] =
-    new DefaultFunctorTell[ZIOReaderWriterState[E, L, S, *], L] {
+  ): Tell[ZIOReaderWriterState[E, L, S, *], L] =
+    new Tell[ZIOReaderWriterState[E, L, S, *], L] {
       override val functor: Functor[ZIOReaderWriterState[E, L, S, *]] = ev
       override def tell(l: L): ZIOReaderWriterState[E, L, S, Unit] =
         ZIO.accessM[Has[Ref[L]]](_.get.update(log => monoid.combine(log, l)))
@@ -34,8 +34,8 @@ object ZioInstances {
   implicit def zioMonadState[E, L, S](
     implicit ev: Monad[ZIOReaderWriterState[E, L, S, *]],
     tag: Tag[Ref[S]]
-  ): MonadState[ZIOReaderWriterState[E, L, S, *], S] =
-    new DefaultMonadState[ZIOReaderWriterState[E, L, S, *], S] {
+  ): Stateful[ZIOReaderWriterState[E, L, S, *], S] =
+    new Stateful[ZIOReaderWriterState[E, L, S, *], S] {
       override val monad: Monad[ZIOReaderWriterState[E, L, S, *]] = ev
       override def get: ZIOReaderWriterState[E, L, S, S]          = ZIO.accessM[Has[Ref[S]]](_.get.get)
       override def set(s: S): ZIOReaderWriterState[E, L, S, Unit] = ZIO.accessM[Has[Ref[S]]](_.get.set(s))
@@ -55,9 +55,9 @@ object ZioInstances {
       }
     }
 
-  implicit val m1: Monad[P]                     = zioMonad[Env, Chain[Event], State]
-  implicit val m2: ApplicativeAsk[P, Env]       = zioApplicativeAsk[Env, Chain[Event], State]
-  implicit val m3: FunctorTell[P, Chain[Event]] = zioFunctorTell[Env, Chain[Event], State]
-  implicit val m4: MonadState[P, State]         = zioMonadState[Env, Chain[Event], State]
+  implicit val m1: Monad[P]              = zioMonad[Env, Chain[Event], State]
+  implicit val m2: Ask[P, Env]           = zioApplicativeAsk[Env, Chain[Event], State]
+  implicit val m3: Tell[P, Chain[Event]] = zioFunctorTell[Env, Chain[Event], State]
+  implicit val m4: Stateful[P, State]    = zioMonadState[Env, Chain[Event], State]
 
 }

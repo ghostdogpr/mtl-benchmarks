@@ -1,12 +1,13 @@
 package ck.benchmarks
 
 import java.util.concurrent.TimeUnit
-import scala.language.{ higherKinds, postfixOps }
+import scala.language.postfixOps
 import cats.data.Chain
 import cats.effect.IO
 import ck.benchmarks.IrwsInstances._
 import ck.benchmarks.Test._
 import ck.benchmarks.ZioInstances._
+import ck.benchmarks.ZPureInstances._
 import org.openjdk.jmh.annotations.{ State => S, _ }
 import zio.internal.Platform
 import zio.{ BootstrapRuntime, Ref, Runtime, ZEnv, ZLayer }
@@ -33,8 +34,16 @@ class Benchmarks {
     testReaderWriterState[IO].run(Env("config"), State(2)).unsafeRunSync()
 
   @Benchmark
+  def ZPure(): Unit =
+    testZPure.provide(Env("config")).run(State(2))
+
+  @Benchmark
   def MTLZIO(): Unit =
     runtime.unsafeRun(testMTL[P].provideLayer(layer))
+
+  @Benchmark
+  def MTLZPure(): Unit =
+    testMTL[P4].provide(Env("config")).run(State(2))
 
   @Benchmark
   def MTLReaderWriterStateIO(): Unit =

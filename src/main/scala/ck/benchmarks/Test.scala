@@ -1,12 +1,12 @@
 package ck.benchmarks
 
-import scala.language.higherKinds
 import cats.{ Eval, Monad }
 import cats.data.{ Chain, IndexedReaderWriterStateT }
 import cats.effect.SyncIO
 import cats.implicits._
-import cats.mtl.{ ApplicativeAsk, FunctorTell, MonadState }
+import cats.mtl._
 import ck.benchmarks.ZioInstances.ZIOReaderWriterState
+import zio.prelude.fx.ZPure
 
 object Test {
   case class Env(config: String)
@@ -16,6 +16,7 @@ object Test {
   type P[+A] = ZIOReaderWriterState[Env, Chain[Event], State, A]
   type P2[A] = IndexedReaderWriterStateT[SyncIO, Env, Chain[Event], State, State, A]
   type P3[A] = IndexedReaderWriterStateT[Eval, Env, Chain[Event], State, State, A]
+  type P4[A] = ZPure[Chain[Event], State, State, Env, Nothing, A]
 
   val loops = 1000
 
@@ -33,10 +34,21 @@ object Test {
       .sequence
       .void
 
+  def testZPure: ZPure[Chain[Event], State, State, Env, Nothing, Unit] =
+    ZPure
+      .forEach((1 to loops).toList)(_ =>
+        for {
+          conf <- ZPure.access[Env](_.config)
+          _    <- ZPure.log(Chain(Event(s"Env = $conf")))
+          _    <- ZPure.update[State, State](state => state.copy(value = state.value + 1))
+        } yield ()
+      )
+      .unit
+
   def testMTL[F[_]: Monad](
-    implicit reader: ApplicativeAsk[F, Env],
-    writer: FunctorTell[F, Chain[Event]],
-    state: MonadState[F, State]
+    implicit reader: Ask[F, Env],
+    writer: Tell[F, Chain[Event]],
+    state: Stateful[F, State]
   ): F[Unit] =
     (1 to loops).toList
       .map(_ =>
