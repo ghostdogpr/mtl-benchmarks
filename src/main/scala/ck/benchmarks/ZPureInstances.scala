@@ -1,7 +1,5 @@
 package ck.benchmarks
 
-import cats.data.Chain
-import cats.kernel.Monoid
 import cats.mtl._
 import cats.{ Applicative, Functor, Monad }
 import ck.benchmarks.Test._
@@ -10,8 +8,7 @@ import zio.prelude.fx.ZPure
 object ZPureInstances {
 
   implicit def zPureApplicativeAsk[E, L, S](
-    implicit ev: Applicative[ZPure[L, S, S, E, Nothing, *]],
-    monoid: Monoid[L]
+    implicit ev: Applicative[ZPure[L, S, S, E, Nothing, *]]
   ): Ask[ZPure[L, S, S, E, Nothing, *], E] =
     new Ask[ZPure[L, S, S, E, Nothing, *], E] {
       override val applicative: Applicative[ZPure[L, S, S, E, Nothing, *]] = ev
@@ -19,8 +16,7 @@ object ZPureInstances {
     }
 
   implicit def zPureFunctorTell[E, L, S](
-    implicit ev: Functor[ZPure[L, S, S, E, Nothing, *]],
-    monoid: Monoid[L]
+    implicit ev: Functor[ZPure[L, S, S, E, Nothing, *]]
   ): Tell[ZPure[L, S, S, E, Nothing, *], L] =
     new Tell[ZPure[L, S, S, E, Nothing, *], L] {
       override val functor: Functor[ZPure[L, S, S, E, Nothing, *]] = ev
@@ -36,7 +32,7 @@ object ZPureInstances {
       override def set(s: S): ZPure[L, S, S, E, Nothing, Unit] = ZPure.set(s)
     }
 
-  implicit def zPureMonad[E, L, S](implicit monoid: Monoid[L]): Monad[ZPure[L, S, S, E, Nothing, *]] =
+  implicit def zPureMonad[E, L, S]: Monad[ZPure[L, S, S, E, Nothing, *]] =
     new Monad[ZPure[L, S, S, E, Nothing, *]] {
       override def pure[A](x: A): ZPure[L, S, S, E, Nothing, A] = ZPure.succeed(x)
       override def flatMap[A, B](fa: ZPure[L, S, S, E, Nothing, A])(
@@ -51,9 +47,9 @@ object ZPureInstances {
         }
     }
 
-  implicit val z1: Monad[P4]              = zPureMonad[Env, Chain[Event], State]
-  implicit val z2: Ask[P4, Env]           = zPureApplicativeAsk[Env, Chain[Event], State]
-  implicit val z3: Tell[P4, Chain[Event]] = zPureFunctorTell[Env, Chain[Event], State]
-  implicit val z4: Stateful[P4, State]    = zPureMonadState[Env, Chain[Event], State]
+  implicit val z1: Monad[P4]           = zPureMonad[Env, Event, State]
+  implicit val z2: Ask[P4, Env]        = zPureApplicativeAsk[Env, Event, State]
+  implicit val z3: Tell[P4, Event]     = zPureFunctorTell[Env, Event, State]
+  implicit val z4: Stateful[P4, State] = zPureMonadState[Env, Event, State]
 
 }

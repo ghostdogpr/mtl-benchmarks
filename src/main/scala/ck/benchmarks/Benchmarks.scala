@@ -43,7 +43,7 @@ class Benchmarks {
 
   @Benchmark
   def MTLZPure(): Unit =
-    testMTL[P4].provide(Env("config")).run(State(2))
+    testMTLChunk[P4].provide(Env("config")).run(State(2))
 
   @Benchmark
   def MTLReaderWriterStateIO(): Unit =

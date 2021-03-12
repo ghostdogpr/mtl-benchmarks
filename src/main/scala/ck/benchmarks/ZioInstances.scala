@@ -41,7 +41,7 @@ object ZioInstances {
       override def set(s: S): ZIOReaderWriterState[E, L, S, Unit] = ZIO.accessM[Has[Ref[S]]](_.get.set(s))
     }
 
-  implicit def zioMonad[E, L, S](implicit monoid: Monoid[L]): Monad[ZIOReaderWriterState[E, L, S, *]] =
+  implicit def zioMonad[E, L, S]: Monad[ZIOReaderWriterState[E, L, S, *]] =
     new Monad[ZIOReaderWriterState[E, L, S, *]] {
       override def pure[A](x: A): ZIOReaderWriterState[E, L, S, A] = ZIO.succeed(x)
       override def flatMap[A, B](fa: ZIOReaderWriterState[E, L, S, A])(
