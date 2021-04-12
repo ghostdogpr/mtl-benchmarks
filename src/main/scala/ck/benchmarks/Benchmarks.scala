@@ -4,6 +4,7 @@ import java.util.concurrent.TimeUnit
 import scala.language.postfixOps
 import cats.data.Chain
 import cats.effect.IO
+import cats.effect.unsafe.implicits.global
 import ck.benchmarks.IrwsInstances._
 import ck.benchmarks.Test._
 import ck.benchmarks.ZioInstances._
@@ -25,8 +26,8 @@ class Benchmarks {
   }
 
   private val layer =
-    ZLayer.fromEffect(Ref.make(State(2))) ++
-      ZLayer.fromEffect(Ref.make(Chain.empty[Event])) ++
+    Ref.make(State(2)).toLayer ++
+      Ref.make(Chain.empty[Event]).toLayer ++
       ZLayer.succeed(Env("config"))
 
   @Benchmark

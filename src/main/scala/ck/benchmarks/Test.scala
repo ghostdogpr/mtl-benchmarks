@@ -22,7 +22,7 @@ object Test {
 
   def testReaderWriterState[F[_]: Monad]: IndexedReaderWriterStateT[F, Env, Chain[Event], State, State, Unit] =
     (1 to loops).toList
-      .map(_ =>
+      .traverse(_ =>
         for {
           conf <- IndexedReaderWriterStateT.ask[F, Env, Chain[Event], State].map(_.config)
           _    <- IndexedReaderWriterStateT.tell[F, Env, Chain[Event], State](Chain(Event(s"Env = $conf")))
@@ -31,7 +31,6 @@ object Test {
               )
         } yield ()
       )
-      .sequence
       .void
 
   def testZPure: ZPure[Event, State, State, Env, Nothing, Unit] =
@@ -51,14 +50,13 @@ object Test {
     state: Stateful[F, State]
   ): F[Unit] =
     (1 to loops).toList
-      .map(_ =>
+      .traverse(_ =>
         for {
           conf <- reader.ask.map(_.config)
           _    <- writer.tell(Chain(Event(s"Env = $conf")))
           _    <- state.modify(state => state.copy(value = state.value + 1))
         } yield ()
       )
-      .sequence
       .void
 
   def testMTLChunk[F[_]: Monad](
@@ -67,13 +65,12 @@ object Test {
     state: Stateful[F, State]
   ): F[Unit] =
     (1 to loops).toList
-      .map(_ =>
+      .traverse(_ =>
         for {
           conf <- reader.ask.map(_.config)
           _    <- writer.tell(Event(s"Env = $conf"))
           _    <- state.modify(state => state.copy(value = state.value + 1))
         } yield ()
       )
-      .sequence
       .void
 }
