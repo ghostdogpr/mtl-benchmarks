@@ -36,7 +36,7 @@ class Benchmarks {
 
   @Benchmark
   def ZPure(): Unit =
-    testZPure.provide(Env("config")).run(State(2))
+    testZPure.provide(Env("config")).runAll(State(2))
 
   @Benchmark
   def MTLZIO(): Unit =

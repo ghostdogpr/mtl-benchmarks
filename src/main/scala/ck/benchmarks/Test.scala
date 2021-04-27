@@ -33,7 +33,7 @@ object Test {
       )
       .void
 
-  def testZPure: ZPure[Event, State, State, Env, Nothing, Unit] =
+  def testZPure: ZPure[Event, State, State, Env, Throwable, Unit] =
     ZPure
       .forEach((1 to loops).toList)(_ =>
         for {
