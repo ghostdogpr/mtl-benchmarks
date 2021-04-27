@@ -9,7 +9,7 @@ import zio.{ Has, Ref, Tag, ZIO }
 
 object ZioInstances {
 
-  type ZIOReaderWriterState[E, L, S, +A] = ZIO[Has[E] with Has[Ref[S]] with Has[Ref[L]], Nothing, A]
+  type ZIOReaderWriterState[E, L, S, +A] = ZIO[Has[E] with Has[Ref[S]] with Has[Ref[L]], Throwable, A]
 
   implicit def zioApplicativeAsk[E: Tag, L, S](
     implicit ev: Applicative[ZIOReaderWriterState[E, L, S, *]],

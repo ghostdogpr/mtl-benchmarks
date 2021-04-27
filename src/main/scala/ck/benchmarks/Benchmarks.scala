@@ -44,13 +44,13 @@ class Benchmarks {
 
   @Benchmark
   def MTLZPure(): Unit =
-    testMTLChunk[P4].provide(Env("config")).run(State(2))
+    testMTLChunk[P4].provide(Env("config")).runAll(State(2))
 
   @Benchmark
   def MTLReaderWriterStateIO(): Unit =
     testMTL[P2].run(Env("config"), State(2)).unsafeRunSync()
 
   @Benchmark
-  def MTLReaderWriterStateEval(): Unit =
-    testMTL[P3].run(Env("config"), State(2)).value
+  def MTLReaderWriterStateEither(): Unit =
+    testMTL[P3].run(Env("config"), State(2))
 }
