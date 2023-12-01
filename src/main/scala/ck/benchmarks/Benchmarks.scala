@@ -1,7 +1,9 @@
 package ck.benchmarks
 
 import java.util.concurrent.TimeUnit
+
 import scala.language.postfixOps
+
 import cats.data.Chain
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
@@ -10,8 +12,7 @@ import ck.benchmarks.Test._
 import ck.benchmarks.ZioInstances._
 import ck.benchmarks.ZPureInstances._
 import org.openjdk.jmh.annotations.{ State => S, _ }
-import zio.internal.Platform
-import zio.{ BootstrapRuntime, Ref, Runtime, ZEnv, ZLayer }
+import zio.{ Ref, ZLayer }
 
 @S(Scope.Thread)
 @BenchmarkMode(Array(Mode.Throughput))
@@ -21,13 +22,9 @@ import zio.{ BootstrapRuntime, Ref, Runtime, ZEnv, ZLayer }
 @Fork(1)
 class Benchmarks {
 
-  private val runtime: Runtime[ZEnv] = new BootstrapRuntime {
-    override val platform: Platform = Platform.benchmark
-  }
-
   private val layer =
-    Ref.make(State(2)).toLayer ++
-      Ref.make(Chain.empty[Event]).toLayer ++
+    ZLayer(Ref.make(State(2))) ++
+      ZLayer(Ref.make(Chain.empty[Event])) ++
       ZLayer.succeed(Env("config"))
 
   @Benchmark
@@ -36,15 +33,17 @@ class Benchmarks {
 
   @Benchmark
   def ZPure(): Unit =
-    testZPure.provide(Env("config")).runAll(State(2))
+    testZPure.provideService(Env("config")).runAll(State(2))
 
   @Benchmark
   def MTLZIO(): Unit =
-    runtime.unsafeRun(testMTL[P].provideLayer(layer))
+    zio.Unsafe.unsafe(implicit u =>
+      zio.Runtime.default.unsafe.run(testMTL[P].provideLayer(layer)).getOrThrowFiberFailure()
+    )
 
   @Benchmark
   def MTLZPure(): Unit =
-    testMTLChunk[P4].provide(Env("config")).runAll(State(2))
+    testMTLChunk[P4].provideService(Env("config")).runAll(State(2))
 
   @Benchmark
   def MTLReaderWriterStateIO(): Unit =

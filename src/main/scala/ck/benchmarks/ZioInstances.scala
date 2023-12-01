@@ -5,11 +5,11 @@ import cats.kernel.Monoid
 import cats.mtl._
 import cats.{ Applicative, Functor, Monad }
 import ck.benchmarks.Test._
-import zio.{ Has, Ref, Tag, ZIO }
+import zio.{ Ref, Tag, ZIO }
 
 object ZioInstances {
 
-  type ZIOReaderWriterState[E, L, S, +A] = ZIO[Has[E] with Has[Ref[S]] with Has[Ref[L]], Throwable, A]
+  type ZIOReaderWriterState[E, L, S, +A] = ZIO[E with Ref[S] with Ref[L], Throwable, A]
 
   implicit def zioApplicativeAsk[E: Tag, L, S](
     implicit ev: Applicative[ZIOReaderWriterState[E, L, S, *]],
@@ -28,7 +28,7 @@ object ZioInstances {
     new Tell[ZIOReaderWriterState[E, L, S, *], L] {
       override val functor: Functor[ZIOReaderWriterState[E, L, S, *]] = ev
       override def tell(l: L): ZIOReaderWriterState[E, L, S, Unit] =
-        ZIO.accessM[Has[Ref[L]]](_.get.update(log => monoid.combine(log, l)))
+        ZIO.serviceWithZIO[Ref[L]](_.update(log => monoid.combine(log, l)))
     }
 
   implicit def zioMonadState[E, L, S](
@@ -37,8 +37,8 @@ object ZioInstances {
   ): Stateful[ZIOReaderWriterState[E, L, S, *], S] =
     new Stateful[ZIOReaderWriterState[E, L, S, *], S] {
       override val monad: Monad[ZIOReaderWriterState[E, L, S, *]] = ev
-      override def get: ZIOReaderWriterState[E, L, S, S]          = ZIO.accessM[Has[Ref[S]]](_.get.get)
-      override def set(s: S): ZIOReaderWriterState[E, L, S, Unit] = ZIO.accessM[Has[Ref[S]]](_.get.set(s))
+      override def get: ZIOReaderWriterState[E, L, S, S]          = ZIO.serviceWithZIO[Ref[S]](_.get)
+      override def set(s: S): ZIOReaderWriterState[E, L, S, Unit] = ZIO.serviceWithZIO[Ref[S]](_.set(s))
     }
 
   implicit def zioMonad[E, L, S]: Monad[ZIOReaderWriterState[E, L, S, *]] =
@@ -59,5 +59,4 @@ object ZioInstances {
   implicit val m2: Ask[P, Env]           = zioApplicativeAsk[Env, Chain[Event], State]
   implicit val m3: Tell[P, Chain[Event]] = zioFunctorTell[Env, Chain[Event], State]
   implicit val m4: Stateful[P, State]    = zioMonadState[Env, Chain[Event], State]
-
 }

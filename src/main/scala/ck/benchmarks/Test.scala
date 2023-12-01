@@ -37,7 +37,7 @@ object Test {
     ZPure
       .forEach((1 to loops).toList)(_ =>
         for {
-          conf <- ZPure.access[Env](_.config)
+          conf <- ZPure.serviceWith[Env](_.config)
           _    <- ZPure.log(Event(s"Env = $conf"))
           _    <- ZPure.update[State, State](state => state.copy(value = state.value + 1))
         } yield ()

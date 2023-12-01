@@ -4,15 +4,16 @@ import cats.mtl._
 import cats.{ Applicative, Functor, Monad }
 import ck.benchmarks.Test._
 import zio.prelude.fx.ZPure
+import zio.Tag
 
 object ZPureInstances {
 
-  implicit def zPureApplicativeAsk[L, S, R, E](
+  implicit def zPureApplicativeAsk[L, S, R: Tag, E](
     implicit ev: Applicative[ZPure[L, S, S, R, E, *]]
   ): Ask[ZPure[L, S, S, R, E, *], R] =
     new Ask[ZPure[L, S, S, R, E, *], R] {
       override val applicative: Applicative[ZPure[L, S, S, R, E, *]] = ev
-      override def ask[R2 >: R]: ZPure[L, S, S, R, E, R2]            = ZPure.environment
+      override def ask[R2 >: R]: ZPure[L, S, S, R, E, R2]            = ZPure.service
     }
 
   implicit def zPureFunctorTell[L, S, R, E](
