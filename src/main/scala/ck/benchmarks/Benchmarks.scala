@@ -11,6 +11,7 @@ import ck.benchmarks.IrwsInstances._
 import ck.benchmarks.Test._
 import ck.benchmarks.ZioInstances._
 import ck.benchmarks.ZPureInstances._
+import kyo._
 import org.openjdk.jmh.annotations.{ State => S, _ }
 import zio.{ Ref, ZLayer }
 
@@ -34,6 +35,24 @@ class Benchmarks {
   @Benchmark
   def ZPure(): Unit =
     testZPure.provideService(Env("config")).runAll(State(2))
+
+  @Benchmark
+  def kyo(): Unit =
+    Vars.run(
+      Vars.let(State(2))(
+        Vars.let(Chain.empty)(
+          Envs[Env].run(Env("config"))(
+            Aborts[Throwable].run(
+              for {
+                _      <- testKyo
+                state  <- Vars.get[State]
+                events <- Vars.get[Chain[Event]]
+              } yield (events, state)
+            )
+          )
+        )
+      )
+    )
 
   @Benchmark
   def MTLZIO(): Unit =

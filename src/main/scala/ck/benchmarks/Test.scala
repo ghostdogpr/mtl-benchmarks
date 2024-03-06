@@ -66,4 +66,15 @@ object Test {
         _    <- state.modify(state => state.copy(value = state.value + 1))
       } yield ()
     )
+
+  import kyo._
+
+  def testKyo: Unit < (Aborts[Throwable] & Envs[Env] & Vars[State | Chain[Event]]) =
+    Seqs.traverseUnit(loops)(_ =>
+      for {
+        conf <- Envs[Env].use(_.config)
+        _    <- Vars.update[Chain[Event]](_ :+ Event(s"Env = $conf"))
+        _    <- Vars.update[State](state => state.copy(value = state.value + 1))
+      } yield ()
+    )
 }
