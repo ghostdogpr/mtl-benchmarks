@@ -18,7 +18,7 @@ object Test {
   type P3[A] = IndexedReaderWriterStateT[Either[Throwable, *], Env, Chain[Event], State, State, A]
   type P4[A] = ZPure[Event, State, State, Env, Throwable, A]
 
-  val loops = (1 to 100000000).toList
+  val loops = (1 to 1000).toList
 
   def testReaderWriterState[F[_]: Monad]: IndexedReaderWriterStateT[F, Env, Chain[Event], State, State, Unit] =
     loops
@@ -64,17 +64,6 @@ object Test {
         conf <- reader.ask.map(_.config)
         _    <- writer.tell(Event(s"Env = $conf"))
         _    <- state.modify(state => state.copy(value = state.value + 1))
-      } yield ()
-    )
-
-  import kyo._
-
-  def testKyo: Unit < (Aborts[Throwable] & Envs[Env] & Vars[State | Chain[Event]]) =
-    Seqs.traverseUnit(loops)(_ =>
-      for {
-        conf <- Envs[Env].use(_.config)
-        _    <- Vars.update[Chain[Event]](_ :+ Event(s"Env = $conf"))
-        _    <- Vars.update[State](state => state.copy(value = state.value + 1))
       } yield ()
     )
 }
