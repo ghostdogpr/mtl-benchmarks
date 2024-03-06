@@ -18,11 +18,11 @@ object Test {
   type P3[A] = IndexedReaderWriterStateT[Either[Throwable, *], Env, Chain[Event], State, State, A]
   type P4[A] = ZPure[Event, State, State, Env, Throwable, A]
 
-  val loops = 1000
+  val loops = (1 to 1000).toList
 
   def testReaderWriterState[F[_]: Monad]: IndexedReaderWriterStateT[F, Env, Chain[Event], State, State, Unit] =
-    (1 to loops).toList
-      .traverse(_ =>
+    loops
+      .traverse_(_ =>
         for {
           conf <- IndexedReaderWriterStateT.ask[F, Env, Chain[Event], State].map(_.config)
           _    <- IndexedReaderWriterStateT.tell[F, Env, Chain[Event], State](Chain(Event(s"Env = $conf")))
@@ -31,46 +31,39 @@ object Test {
               )
         } yield ()
       )
-      .void
 
   def testZPure: ZPure[Event, State, State, Env, Throwable, Unit] =
-    ZPure
-      .forEach((1 to loops).toList)(_ =>
-        for {
-          conf <- ZPure.serviceWith[Env](_.config)
-          _    <- ZPure.log(Event(s"Env = $conf"))
-          _    <- ZPure.update[State, State](state => state.copy(value = state.value + 1))
-        } yield ()
-      )
-      .unit
+    ZPure.foreachDiscard(loops)(_ =>
+      for {
+        conf <- ZPure.serviceWith[Env](_.config)
+        _    <- ZPure.log(Event(s"Env = $conf"))
+        _    <- ZPure.update[State, State](state => state.copy(value = state.value + 1))
+      } yield ()
+    )
 
   def testMTL[F[_]: Monad](
     implicit reader: Ask[F, Env],
     writer: Tell[F, Chain[Event]],
     state: Stateful[F, State]
   ): F[Unit] =
-    (1 to loops).toList
-      .traverse(_ =>
-        for {
-          conf <- reader.ask.map(_.config)
-          _    <- writer.tell(Chain(Event(s"Env = $conf")))
-          _    <- state.modify(state => state.copy(value = state.value + 1))
-        } yield ()
-      )
-      .void
+    loops.traverse_(_ =>
+      for {
+        conf <- reader.ask.map(_.config)
+        _    <- writer.tell(Chain(Event(s"Env = $conf")))
+        _    <- state.modify(state => state.copy(value = state.value + 1))
+      } yield ()
+    )
 
   def testMTLChunk[F[_]: Monad](
     implicit reader: Ask[F, Env],
     writer: Tell[F, Event],
     state: Stateful[F, State]
   ): F[Unit] =
-    (1 to loops).toList
-      .traverse(_ =>
-        for {
-          conf <- reader.ask.map(_.config)
-          _    <- writer.tell(Event(s"Env = $conf"))
-          _    <- state.modify(state => state.copy(value = state.value + 1))
-        } yield ()
-      )
-      .void
+    loops.traverse_(_ =>
+      for {
+        conf <- reader.ask.map(_.config)
+        _    <- writer.tell(Event(s"Env = $conf"))
+        _    <- state.modify(state => state.copy(value = state.value + 1))
+      } yield ()
+    )
 }
