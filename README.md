@@ -1,1 +1,1 @@
-To run: `sbt jmh:run`
+To run: `sbt Jmh / run`
