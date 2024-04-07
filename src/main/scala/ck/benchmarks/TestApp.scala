@@ -8,15 +8,17 @@ import zio.Chunk
 
 object TestApp extends App {
   println(
-    Aborts[Throwable].run(
-      Vars[State].run(State(2))(
-        Sums[Chunk[Event]].run(
-          Envs[Env].run(Env("config"))(
-            testKyo.andThen(Vars[State].get)
+    Aborts[Throwable]
+      .run(
+        Vars[State].run(State(2))(
+          Sums[Chunk[Event]].run(
+            Envs[Env].run(Env("config"))(
+              testKyo.andThen(Vars[State].get)
+            )
           )
         )
       )
-    ).pure
+      .pure
   )
 //  println(testZPure.provideService(Env("config")).runAll(State(2)))
 //  println(testMTLChunk[P4].provideService(Env("config")).runAll(State(2)))

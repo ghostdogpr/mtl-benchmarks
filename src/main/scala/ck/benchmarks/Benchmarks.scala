@@ -12,8 +12,8 @@ import ck.benchmarks.Test._
 import ck.benchmarks.ZioInstances._
 import ck.benchmarks.ZPureInstances._
 import kyo._
-import org.openjdk.jmh.annotations.{ State => S, _ }
-import zio.{ Chunk, Ref, ZLayer }
+import org.openjdk.jmh.annotations.{State => S, _}
+import zio.{Chunk, Ref, ZLayer}
 
 @S(Scope.Thread)
 @BenchmarkMode(Array(Mode.Throughput))
