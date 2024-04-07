@@ -4,24 +4,19 @@ import cats.data.Chain
 import ck.benchmarks.Test._
 import ck.benchmarks.ZPureInstances._
 import kyo._
+import zio.Chunk
 
 object TestApp extends App {
   println(
-    Vars.run(
-      Vars.let(State(2))(
-        Vars.let(Chain.empty)(
+    Aborts[Throwable].run(
+      Vars[State].run(State(2))(
+        Sums[Chunk[Event]].run(
           Envs[Env].run(Env("config"))(
-            Aborts[Throwable].run(
-              for {
-                _      <- testKyo
-                state  <- Vars.get[State]
-                events <- Vars.get[Chain[Event]]
-              } yield (events, state)
-            )
+            testKyo.andThen(Vars[State].get)
           )
         )
       )
-    )
+    ).pure
   )
 //  println(testZPure.provideService(Env("config")).runAll(State(2)))
 //  println(testMTLChunk[P4].provideService(Env("config")).runAll(State(2)))

@@ -7,6 +7,7 @@ import cats.implicits._
 import cats.mtl._
 import ck.benchmarks.ZioInstances.ZIOReaderWriterState
 import zio.prelude.fx.ZPure
+import zio.Chunk
 
 object Test {
   case class Env(config: String)
@@ -69,12 +70,14 @@ object Test {
 
   import kyo._
 
-  def testKyo: Unit < (Aborts[Throwable] & Envs[Env] & Vars[State | Chain[Event]]) =
+  given chunkSummer[T]: Summer[Chunk[T]]     = Summer(Chunk.empty[T])((a, b) => a ++ b, identity)
+
+  def testKyo: Unit < (Sums[Chunk[Event]] & Vars[State] & Envs[Env] & Aborts[Throwable]) =
     Seqs.traverseUnit(loops)(_ =>
       for {
         conf <- Envs[Env].use(_.config)
-        _    <- Vars.update[Chain[Event]](_ :+ Event(s"Env = $conf"))
-        _    <- Vars.update[State](state => state.copy(value = state.value + 1))
+        _    <- Sums[Chunk[Event]].add(Chunk.single(Event(s"Env = $conf")))
+        _    <- Vars[State].update(state => state.copy(value = state.value + 1))
       } yield ()
     )
 }

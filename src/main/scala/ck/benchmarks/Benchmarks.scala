@@ -13,7 +13,7 @@ import ck.benchmarks.ZioInstances._
 import ck.benchmarks.ZPureInstances._
 import kyo._
 import org.openjdk.jmh.annotations.{ State => S, _ }
-import zio.{ Ref, ZLayer }
+import zio.{ Chunk, Ref, ZLayer }
 
 @S(Scope.Thread)
 @BenchmarkMode(Array(Mode.Throughput))
@@ -38,17 +38,11 @@ class Benchmarks {
 
   @Benchmark
   def kyo(): Unit =
-    Vars.run(
-      Vars.let(State(2))(
-        Vars.let(Chain.empty)(
+    Aborts[Throwable].run(
+      Vars[State].run(State(2))(
+        Sums[Chunk[Event]].run(
           Envs[Env].run(Env("config"))(
-            Aborts[Throwable].run(
-              for {
-                _      <- testKyo
-                state  <- Vars.get[State]
-                events <- Vars.get[Chain[Event]]
-              } yield (events, state)
-            )
+            testKyo.andThen(Vars[State].get)
           )
         )
       )
