@@ -56,6 +56,7 @@ object Test {
         conf <- reader.ask.map(_.config)
         event = Event(s"Env = $conf")
         _    <- writer.tell(Chain(event))
+        add   = 1
         _    <- state.modify(state => state.copy(value = state.value + add))
       } yield ()
     )
