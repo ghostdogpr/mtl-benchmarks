@@ -38,11 +38,11 @@ class Benchmarks {
 
   @Benchmark
   def kyo(): Unit =
-    Aborts[Throwable].run(
-      Vars[State].run(State(2))(
-        Sums[Chunk[Event]].run(
-          Envs[Env].run(Env("config"))(
-            testKyo.andThen(Vars[State].get)
+    Aborts.run(
+      Vars.run(State(2))(
+        Sums.run(
+          Envs.run(Env("config"))(
+            testKyo.andThen(Vars.get)
           )
         )
       )

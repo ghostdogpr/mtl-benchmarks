@@ -7,7 +7,6 @@ import cats.implicits._
 import cats.mtl._
 import ck.benchmarks.ZioInstances.ZIOReaderWriterState
 import zio.prelude.fx.ZPure
-import zio.Chunk
 
 object Test {
   case class Env(config: String)
@@ -37,13 +36,14 @@ object Test {
 
   def testZPure: ZPure[Event, State, State, Env, Throwable, Unit] =
     ZPure.foreachDiscard(loops)(_ =>
-      for {
+      (for {
         conf <- ZPure.serviceWith[Env](_.config)
         event = Event(s"Env = $conf")
         _    <- ZPure.log(event)
+        _    <- if (true) ZPure.unit else ZPure.fail("fail")
         add   = 1
         _    <- ZPure.update[State, State](state => state.copy(value = state.value + add))
-      } yield ()
+      } yield ()).catchAll(e => ZPure.log(Event(e)))
     )
 
   def testMTL[F[_]: Monad](implicit
@@ -76,18 +76,16 @@ object Test {
       } yield ()
     )
 
-  import kyo._
+  import kyo.{Chunk => _, _}
 
-  given chunkSummer[T]: Summer[Chunk[T]] = Summer(Chunk.empty[T])((a, b) => a ++ b, identity)
-
-  def testKyo: Unit < (Sums[Chunk[Event]] & Vars[State] & Envs[Env] & Aborts[Throwable]) =
-    Seqs.traverseUnit(loops)(_ =>
+  def testKyo: Unit < (Sums[Event] & Vars[State] & Envs[Env] & Aborts[Throwable]) =
+    Seqs.foreach(loops)(_ =>
       for {
-        conf <- Envs[Env].use(_.config)
+        conf <- Envs.use[Env](_.config)
         event = Event(s"Env = $conf")
-        _    <- Sums[Chunk[Event]].add(Chunk.single(event))
+        _    <- Sums.add(event)
         add   = 1
-        _    <- Vars[State].update(state => state.copy(value = state.value + add))
+        _    <- Vars.update[State](state => state.copy(value = state.value + add))
       } yield ()
     )
 }

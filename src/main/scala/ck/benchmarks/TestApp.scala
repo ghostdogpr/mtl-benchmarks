@@ -4,16 +4,15 @@ import cats.data.Chain
 import ck.benchmarks.Test._
 import ck.benchmarks.ZPureInstances._
 import kyo._
-import zio.Chunk
 
 object TestApp extends App {
   println(
-    Aborts[Throwable]
+    Aborts
       .run(
-        Vars[State].run(State(2))(
-          Sums[Chunk[Event]].run(
-            Envs[Env].run(Env("config"))(
-              testKyo.andThen(Vars[State].get)
+        Vars.run(State(2))(
+          Sums.run(
+            Envs.run(Env("config"))(
+              testKyo.andThen(Vars.get)
             )
           )
         )

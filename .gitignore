@@ -3,3 +3,4 @@ project/project/target
 project/target
 target
 .DS_Store
+.bsp/sbt.json
