@@ -36,14 +36,13 @@ object Test {
 
   def testZPure: ZPure[Event, State, State, Env, Throwable, Unit] =
     ZPure.foreachDiscard(loops)(_ =>
-      (for {
+      for {
         conf <- ZPure.serviceWith[Env](_.config)
         event = Event(s"Env = $conf")
         _    <- ZPure.log(event)
-        _    <- if (true) ZPure.unit else ZPure.fail("fail")
         add   = 1
         _    <- ZPure.update[State, State](state => state.copy(value = state.value + add))
-      } yield ()).catchAll(e => ZPure.log(Event(e)))
+      } yield ()
     )
 
   def testMTL[F[_]: Monad](implicit
@@ -76,7 +75,7 @@ object Test {
       } yield ()
     )
 
-  import kyo.{Chunk => _, _}
+  import kyo._
 
   def testKyo: Unit < (Sums[Event] & Vars[State] & Envs[Env] & Aborts[Throwable]) =
     Seqs.foreach(loops)(_ =>
