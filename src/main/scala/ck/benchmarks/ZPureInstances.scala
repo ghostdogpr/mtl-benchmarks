@@ -48,9 +48,9 @@ object ZPureInstances {
         }
     }
 
-  implicit val z1: Monad[P4]           = zPureMonad[Event, State, Env, Throwable]
-  implicit val z2: Ask[P4, Env]        = zPureApplicativeAsk[Event, State, Env, Throwable]
-  implicit val z3: Tell[P4, Event]     = zPureFunctorTell[Event, State, Env, Throwable]
-  implicit val z4: Stateful[P4, State] = zPureMonadState[Event, State, Env, Throwable]
+  implicit val z1: Monad[P4]            = zPureMonad[Event, State, Environment, Throwable]
+  implicit val z2: Ask[P4, Environment] = zPureApplicativeAsk[Event, State, Environment, Throwable]
+  implicit val z3: Tell[P4, Event]      = zPureFunctorTell[Event, State, Environment, Throwable]
+  implicit val z4: Stateful[P4, State]  = zPureMonadState[Event, State, Environment, Throwable]
 
 }

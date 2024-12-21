@@ -9,35 +9,35 @@ import ck.benchmarks.ZioInstances.ZIOReaderWriterState
 import zio.prelude.fx.ZPure
 
 object Test {
-  case class Env(config: String)
+  case class Environment(config: String)
   case class Event(name: String)
   case class State(value: Int)
 
-  type P[+A] = ZIOReaderWriterState[Env, Chain[Event], State, A]
-  type P2[A] = IndexedReaderWriterStateT[SyncIO, Env, Chain[Event], State, State, A]
-  type P3[A] = IndexedReaderWriterStateT[Either[Throwable, *], Env, Chain[Event], State, State, A]
-  type P4[A] = ZPure[Event, State, State, Env, Throwable, A]
+  type P[+A] = ZIOReaderWriterState[Environment, Chain[Event], State, A]
+  type P2[A] = IndexedReaderWriterStateT[SyncIO, Environment, Chain[Event], State, State, A]
+  type P3[A] = IndexedReaderWriterStateT[Either[Throwable, *], Environment, Chain[Event], State, State, A]
+  type P4[A] = ZPure[Event, State, State, Environment, Throwable, A]
 
   private val loops = (1 to 1000).toList
 
-  def testReaderWriterState[F[_]: Monad]: IndexedReaderWriterStateT[F, Env, Chain[Event], State, State, Unit] =
+  def testReaderWriterState[F[_]: Monad]: IndexedReaderWriterStateT[F, Environment, Chain[Event], State, State, Unit] =
     loops
       .traverse_(_ =>
         for {
-          conf <- IndexedReaderWriterStateT.ask[F, Env, Chain[Event], State].map(_.config)
+          conf <- IndexedReaderWriterStateT.ask[F, Environment, Chain[Event], State].map(_.config)
           event = Event(s"Env = $conf")
-          _    <- IndexedReaderWriterStateT.tell[F, Env, Chain[Event], State](Chain(event))
+          _    <- IndexedReaderWriterStateT.tell[F, Environment, Chain[Event], State](Chain(event))
           add   = 1
-          _    <- IndexedReaderWriterStateT.modify[F, Env, Chain[Event], State, State](state =>
+          _    <- IndexedReaderWriterStateT.modify[F, Environment, Chain[Event], State, State](state =>
                     state.copy(value = state.value + add)
                   )
         } yield ()
       )
 
-  def testZPure: ZPure[Event, State, State, Env, Throwable, Unit] =
+  def testZPure: ZPure[Event, State, State, Environment, Throwable, Unit] =
     ZPure.foreachDiscard(loops)(_ =>
       for {
-        conf <- ZPure.serviceWith[Env](_.config)
+        conf <- ZPure.serviceWith[Environment](_.config)
         event = Event(s"Env = $conf")
         _    <- ZPure.log(event)
         add   = 1
@@ -46,7 +46,7 @@ object Test {
     )
 
   def testMTL[F[_]: Monad](implicit
-      reader: Ask[F, Env],
+      reader: Ask[F, Environment],
       writer: Tell[F, Chain[Event]],
       state: Stateful[F, State]
   ): F[Unit] =
@@ -61,7 +61,7 @@ object Test {
     )
 
   def testMTLChunk[F[_]: Monad](implicit
-      reader: Ask[F, Env],
+      reader: Ask[F, Environment],
       writer: Tell[F, Event],
       state: Stateful[F, State]
   ): F[Unit] =
@@ -77,14 +77,14 @@ object Test {
 
   import kyo._
 
-  def testKyo: Unit < (Sums[Event] & Vars[State] & Envs[Env] & Aborts[Throwable]) =
-    Seqs.foreach(loops)(_ =>
+  def testKyo: Unit < (Emit[Event] & Var[State] & Env[Environment] & Abort[Throwable]) =
+    Kyo.foreachDiscard(loops)(_ =>
       for {
-        conf <- Envs.use[Env](_.config)
+        conf <- Env.use[Environment](_.config)
         event = Event(s"Env = $conf")
-        _    <- Sums.add(event)
+        _    <- Emit(event)
         add   = 1
-        _    <- Vars.update[State](state => state.copy(value = state.value + add))
+        _    <- Var.update[State](state => state.copy(value = state.value + add))
       } yield ()
     )
 }

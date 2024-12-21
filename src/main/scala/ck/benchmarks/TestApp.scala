@@ -7,17 +7,17 @@ import kyo._
 
 object TestApp extends App {
   println(
-    Aborts
+    Abort
       .run(
-        Vars.run(State(2))(
-          Sums.run(
-            Envs.run(Env("config"))(
-              testKyo.andThen(Vars.get)
+        Var.run(State(2))(
+          Emit.run(
+            Env.run(Environment("config"))(
+              testKyo.andThen(Var.get[State])
             )
           )
         )
       )
-      .pure
+      .eval
   )
 //  println(testZPure.provideService(Env("config")).runAll(State(2)))
 //  println(testMTLChunk[P4].provideService(Env("config")).runAll(State(2)))

@@ -55,8 +55,8 @@ object ZioInstances {
       }
     }
 
-  implicit val m1: Monad[P]              = zioMonad[Env, Chain[Event], State]
-  implicit val m2: Ask[P, Env]           = zioApplicativeAsk[Env, Chain[Event], State]
-  implicit val m3: Tell[P, Chain[Event]] = zioFunctorTell[Env, Chain[Event], State]
-  implicit val m4: Stateful[P, State]    = zioMonadState[Env, Chain[Event], State]
+  implicit val m1: Monad[P]              = zioMonad[Environment, Chain[Event], State]
+  implicit val m2: Ask[P, Environment]   = zioApplicativeAsk[Environment, Chain[Event], State]
+  implicit val m3: Tell[P, Chain[Event]] = zioFunctorTell[Environment, Chain[Event], State]
+  implicit val m4: Stateful[P, State]    = zioMonadState[Environment, Chain[Event], State]
 }

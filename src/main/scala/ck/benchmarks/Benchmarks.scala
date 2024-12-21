@@ -11,7 +11,7 @@ import ck.benchmarks.IrwsInstances._
 import ck.benchmarks.Test._
 import ck.benchmarks.ZioInstances._
 import ck.benchmarks.ZPureInstances._
-import kyo._
+import kyo.{Env => KEnv, _}
 import org.openjdk.jmh.annotations.{State => S, _}
 import zio.{Chunk, Ref, ZLayer}
 
@@ -26,27 +26,29 @@ class Benchmarks {
   private val layer =
     ZLayer(Ref.make(State(2))) ++
       ZLayer(Ref.make(Chain.empty[Event])) ++
-      ZLayer.succeed(Env("config"))
+      ZLayer.succeed(Environment("config"))
 
   @Benchmark
   def readerWriterStateIO(): Unit =
-    testReaderWriterState[IO].run(Env("config"), State(2)).unsafeRunSync()
+    testReaderWriterState[IO].run(Environment("config"), State(2)).unsafeRunSync()
 
   @Benchmark
   def ZPure(): Unit =
-    testZPure.provideService(Env("config")).runAll(State(2))
+    testZPure.provideService(Environment("config")).runAll(State(2))
 
   @Benchmark
   def kyo(): Unit =
-    Aborts.run(
-      Vars.run(State(2))(
-        Sums.run(
-          Envs.run(Env("config"))(
-            testKyo.andThen(Vars.get)
+    Abort
+      .run(
+        Var.run(State(2))(
+          Emit.run(
+            KEnv.run(Environment("config"))(
+              testKyo.andThen(Var.get[State])
+            )
           )
         )
       )
-    )
+      .eval
 
   @Benchmark
   def MTLZIO(): Unit =
@@ -56,13 +58,13 @@ class Benchmarks {
 
   @Benchmark
   def MTLZPure(): Unit =
-    testMTLChunk[P4].provideService(Env("config")).runAll(State(2))
+    testMTLChunk[P4].provideService(Environment("config")).runAll(State(2))
 
   @Benchmark
   def MTLReaderWriterStateIO(): Unit =
-    testMTL[P2].run(Env("config"), State(2)).unsafeRunSync()
+    testMTL[P2].run(Environment("config"), State(2)).unsafeRunSync()
 
   @Benchmark
   def MTLReaderWriterStateEither(): Unit =
-    testMTL[P3].run(Env("config"), State(2))
+    testMTL[P3].run(Environment("config"), State(2))
 }
