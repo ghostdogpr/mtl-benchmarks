@@ -82,7 +82,7 @@ object Test {
       for {
         conf <- Env.use[Environment](_.config)
         event = Event(s"Env = $conf")
-        _    <- Emit(event)
+        _    <- Emit.value(event)
         add   = 1
         _    <- Var.update[State](state => state.copy(value = state.value + add))
       } yield ()
