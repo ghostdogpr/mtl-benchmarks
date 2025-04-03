@@ -7,12 +7,13 @@ import scala.language.postfixOps
 import cats.data.Chain
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
-import ck.benchmarks.IrwsInstances._
-import ck.benchmarks.Test._
-import ck.benchmarks.ZioInstances._
-import ck.benchmarks.ZPureInstances._
-import kyo.{Env => KEnv, _}
-import org.openjdk.jmh.annotations.{State => S, _}
+import ck.benchmarks.IrwsInstances.*
+import ck.benchmarks.Test.*
+import ck.benchmarks.ZioInstances.*
+import ck.benchmarks.ZPureInstances.*
+import kyo.{Env as KEnv, *}
+import org.openjdk.jmh.annotations.{State as S, *}
+import turbolift.mode.{Mode as TMode, ST}
 import zio.{Chunk, Ref, ZLayer}
 
 @S(Scope.Thread)
@@ -69,10 +70,13 @@ class Benchmarks {
     testMTL[P3].run(Environment("config"), State(2))
 
   @Benchmark
-  def turboLift(): Unit =
+  def turboLift(): Unit = {
+    given TMode = ST
     testTurboLift
       .handleWith(MyReader.handler(Environment("config")))
       .handleWith(MyState.handler(State(2)))
       .handleWith(MyWriter.handler)
+      .handleWith(MyError.handler)
       .run
+  }
 }

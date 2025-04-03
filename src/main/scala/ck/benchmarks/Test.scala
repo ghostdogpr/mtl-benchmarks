@@ -93,13 +93,6 @@ object Test {
   import turbolift.Extensions.*
   import turbolift.typeclass.AccumZero
 
-  case object MyReader extends Reader[Environment]
-  case object MyWriter extends WriterK[Chain, Event]
-  case object MyState  extends turbolift.effects.State[State]
-  type MyReader = MyReader.type
-  type MyWriter = MyWriter.type
-  type MyState  = MyState.type
-
   given [A]: AccumZero[Chain[A], A] = new AccumZero[Chain[A], A] {
     def zero: Chain[A]                           = Chain.empty
     def one(a: A): Chain[A]                      = Chain.one(a)
@@ -107,7 +100,16 @@ object Test {
     def plus1(a: Chain[A], b: A): Chain[A]       = a :+ b
   }
 
-  def testTurboLift: Unit !! (MyState & MyWriter & MyReader) =
+  case object MyReader extends Reader[Environment]
+  case object MyWriter extends WriterK[Chain, Event]
+  case object MyState  extends turbolift.effects.State[State]
+  case object MyError  extends turbolift.effects.Error[Throwable]
+  type MyReader = MyReader.type
+  type MyWriter = MyWriter.type
+  type MyState  = MyState.type
+  type MyError  = MyError.type
+
+  def testTurboLift: Unit !! (MyState & MyWriter & MyReader & MyError) =
     loops
       .map(_ =>
         for {
