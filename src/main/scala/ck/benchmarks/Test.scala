@@ -3,8 +3,8 @@ package ck.benchmarks
 import cats.Monad
 import cats.data.{Chain, IndexedReaderWriterStateT}
 import cats.effect.SyncIO
-import cats.implicits._
-import cats.mtl._
+import cats.syntax.all.*
+import cats.mtl.*
 import ck.benchmarks.ZioInstances.ZIOReaderWriterState
 import zio.prelude.fx.ZPure
 
@@ -87,4 +87,36 @@ object Test {
         _    <- Var.update[State](state => state.copy(value = state.value + add))
       } yield ()
     )
+
+  import turbolift.!!
+  import turbolift.effects.{Reader, WriterK}
+  import turbolift.Extensions.*
+  import turbolift.typeclass.AccumZero
+
+  case object MyReader extends Reader[Environment]
+  case object MyWriter extends WriterK[Chain, Event]
+  case object MyState  extends turbolift.effects.State[State]
+  type MyReader = MyReader.type
+  type MyWriter = MyWriter.type
+  type MyState  = MyState.type
+
+  given [A]: AccumZero[Chain[A], A] = new AccumZero[Chain[A], A] {
+    def zero: Chain[A]                           = Chain.empty
+    def one(a: A): Chain[A]                      = Chain.one(a)
+    def plus(a: Chain[A], b: Chain[A]): Chain[A] = a ++ b
+    def plus1(a: Chain[A], b: A): Chain[A]       = a :+ b
+  }
+
+  def testTurboLift: Unit !! (MyState & MyWriter & MyReader) =
+    loops
+      .map(_ =>
+        for {
+          conf <- MyReader.asks(_.config)
+          event = Event(s"Env = $conf")
+          _    <- MyWriter.tell(event)
+          add   = 1
+          _    <- MyState.modify(state => state.copy(value = state.value + add))
+        } yield ()
+      )
+      .traverseVoid
 }

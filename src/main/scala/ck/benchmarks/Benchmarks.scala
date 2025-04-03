@@ -67,4 +67,12 @@ class Benchmarks {
   @Benchmark
   def MTLReaderWriterStateEither(): Unit =
     testMTL[P3].run(Environment("config"), State(2))
+
+  @Benchmark
+  def turboLift(): Unit =
+    testTurboLift
+      .handleWith(MyReader.handler(Environment("config")))
+      .handleWith(MyState.handler(State(2)))
+      .handleWith(MyWriter.handler)
+      .run
 }
