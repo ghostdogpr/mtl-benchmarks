@@ -110,15 +110,13 @@ object Test {
   type MyError  = MyError.type
 
   def testTurboLift: Unit !! (MyState & MyWriter & MyReader & MyError) =
-    loops
-      .map(_ =>
-        for {
-          conf <- MyReader.asks(_.config)
-          event = Event(s"Env = $conf")
-          _    <- MyWriter.tell(event)
-          add   = 1
-          _    <- MyState.modify(state => state.copy(value = state.value + add))
-        } yield ()
-      )
-      .traverseVoid
+    loops.foreachEff(_ =>
+      for {
+        conf <- MyReader.asks(_.config)
+        event = Event(s"Env = $conf")
+        _    <- MyWriter.tell(event)
+        add   = 1
+        _    <- MyState.modify(state => state.copy(value = state.value + add))
+      } yield ()
+    )
 }
