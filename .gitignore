@@ -4,3 +4,7 @@ project/target
 target
 .DS_Store
 .bsp/sbt.json
+.metals
+.vscode
+project/metals.sbt
+project/project/metals.sbt
