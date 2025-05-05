@@ -6,5 +6,5 @@ target
 .bsp/sbt.json
 .metals
 .vscode
-project/metals.sbt
-project/project/metals.sbt
+**/metals.sbt
+.bloop
