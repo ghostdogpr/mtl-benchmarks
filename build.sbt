@@ -2,7 +2,7 @@ name := "ReaderWriterStateBenchmarks"
 
 version := "0.1"
 
-scalaVersion := "3.6.4"
+scalaVersion := "3.7.0"
 
 libraryDependencies += "org.typelevel"      %% "cats-core"      % "2.13.0"
 libraryDependencies += "org.typelevel"      %% "cats-effect"    % "3.6.1"
@@ -13,8 +13,7 @@ libraryDependencies += "io.getkyo"          %% "kyo-core"       % "0.18.0"
 libraryDependencies += "io.github.marcinzh" %% "turbolift-core" % "0.112.0"
 
 scalacOptions += "-Xkind-projector"
-scalacOptions += "-experimental"
-scalacOptions += "-language:experimental.betterFors"
+scalacOptions += "-preview"
 
 resolvers ++= Resolver.sonatypeOssRepos("snapshots")
 
