@@ -78,7 +78,7 @@ object Test {
   import kyo._
 
   def testKyo: Unit < (Emit[Event] & Var[State] & Env[Environment] & Abort[Throwable]) =
-    Kyo.foreachDiscard(loops)(_ =>
+    Loop.repeat(1000)(
       for {
         conf <- Env.use[Environment](_.config)
         event = Event(s"Env = $conf")
