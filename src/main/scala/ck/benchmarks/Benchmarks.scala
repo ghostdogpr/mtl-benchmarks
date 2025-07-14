@@ -11,7 +11,7 @@ import ck.benchmarks.IrwsInstances.*
 import ck.benchmarks.Test.*
 import ck.benchmarks.ZioInstances.*
 import ck.benchmarks.ZPureInstances.*
-import kyo.{Env as KEnv, *}
+import kyo.{Env as KEnv, Scope as *, *}
 import org.openjdk.jmh.annotations.{State as S, *}
 import turbolift.mode.{Mode as TMode, ST}
 import zio.{Chunk, Ref, ZLayer}
